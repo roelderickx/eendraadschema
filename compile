@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # compile using tsconfig.json
-tsc -b build
+tsc
 
-# add GPL
-cat build/GPL3.js build/eendraadschema_no_gpl.js > eendraadschema.js
+# minify the compiled version
+uglifyjs build/eendraadschema.js > build/eendraadschema.min.js
+
+# adding the GPL is pointless then
+#cat build/GPL3.js build/eendraadschema_no_gpl.js > eendraadschema.js
 
 # update builddate
-echo "var CONF_builddate=\""`date +%Y%m%d-%H%M%S`"\"" > builddate.js
+echo "var CONF_builddate=\""`date +%Y%m%d-%H%M%S`"\"" > build/builddate.js
