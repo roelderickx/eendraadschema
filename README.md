@@ -1,17 +1,15 @@
-****************************************************
-Eendraadschema tekenen -- Drawing a one-wire diagram
-****************************************************
+# Eendraadschema tekenen -- Drawing a one-wire diagram
 
-=== Purpose ===
+## Purpose
 
 Design and draw a one-wire diagram as enforced by the Belgian AREI legislation.
 Source code written in Typescript, transpiled to Javascript and run in a browser.
 
-Present files are a standalone copy of the online version found at https://eendraadschema.goethals-jacobs.be.
+Present files are a standalone copy of the online version found at [https://eendraadschema.goethals-jacobs.be](https://eendraadschema.goethals-jacobs.be).
 Note that some limited functionalities will not be available in the standalone version.
 We refer to the online version if you whish to use this tool in a production setting.
 
-=== L I C E N S E ===
+## License
 
 Copyright (C) 2019-2023  Ivan Goethals
 
@@ -26,30 +24,30 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+along with this program.  If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
 
 Licenses for embedded content
 
-- This program uses the Pako.js entropy coding library. Pako is released under an MIT license by Andrey Tupitsin and Vitaly Puzrin. For more information on Pako and the full license text, please visit https://github.com/nodeca/pako
-- Pako implements ZLib in javascript. Zlib is released under the ZLIB License.  See https://www.zlib.net/zlib_license.html
+- This program uses the Pako.js entropy coding library. Pako is released under an MIT license by Andrey Tupitsin and Vitaly Puzrin. For more information on Pako and the full license text, please visit [https://github.com/nodeca/pako](https://github.com/nodeca/pako)
+- Pako implements ZLib in javascript. Zlib is released under the ZLIB License.  See [https://www.zlib.net/zlib_license.html](https://www.zlib.net/zlib_license.html)
 
-=== History ===
+## History
 
 Software developed by Ivan Goethals between as of March 2019.
 Placed on Github as-is on June 1st 2020 and further developed on Github.
-So far, Ivan is the only known contributor to the project.
 
-=== Build / Compile ===
+## Build / Compile
 
 Below description is valid for a linux terminal with bash- or sh-shell.
 With some extra tweaks, compilation on other systems should be possible as well.
 
 - Extract all files and directories in a dedicated folder.
 - Ensure you have a typescript compiler installed that can be called by the name "tsc"
+- Ensure you have uglifyjs installed
 - Run the ./compile -script from the dedicated folder.
-- Open index.html with a modern browser
+- Change to the build folder and open index.html with a modern browser
 
-=== Further development ===
+## Further development
 
 The eendraadschema software is, and has been used by various hobbyists on the Belgian
 market. As such it is important that the software remains backwards compatible with
@@ -63,4 +61,3 @@ json-dumps of internal data-structures, until further notice, this entails the f
   keys must be maintained. If new future features require an extension of the number of available keys,
   extra keys should be added at the end.
 
-=== End of Document ===
