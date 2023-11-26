@@ -1,24 +1,10 @@
 #!/bin/bash
 
-cd src
+# compile using tsconfig.json
+tsc -b build
 
-cat general.js > eendraadschema.ts
-cat SVGelement.ts >> eendraadschema.ts
-cat List_Item.ts >> eendraadschema.ts
-cat Electro_Item.ts >> eendraadschema.ts
-cat Simple_Item.ts >> eendraadschema.ts
-cat Properties.ts >> eendraadschema.ts
-cat Hierarchical_List.ts >> eendraadschema.ts
-cat Print_Table.ts >> eendraadschema.ts
-cat config.ts >> eendraadschema.ts
-cat ../prop/prop_scripts.ts >> eendraadschema.ts
-cat main.ts >> eendraadschema.ts
+# add GPL
+cat build/GPL3.js build/eendraadschema_no_gpl.js > eendraadschema.js
 
-tsc --outfile swap.js eendraadschema.ts
-cat GPL3.js swap.js > eendraadschema.js
-cp eendraadschema.js ..
-rm swap.js
-
-cd ..
-
+# update builddate
 echo "var CONF_builddate=\""`date +%Y%m%d-%H%M%S`"\"" > builddate.js

@@ -1,7 +1,7 @@
 //=========================================================================//
 //
 //  Eendraadschema tekenen (https://eendraadschema.goethals-jacobs.be/)
-//  Copyright (C) 2019  Ivan Goethals
+//  Copyright (C) 2019-2020  Ivan Goethals
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 //  above.
 //
 //=========================================================================//
-
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||

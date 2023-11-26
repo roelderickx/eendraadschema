@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "outFile": "eendraadschema_no_gpl.js"
+  },
+  "files": [
+    "../src/general.ts",
+    "../src/SVGelement.ts",
+    "../src/List_Item.ts",
+    "../src/Electro_Item.ts",
+    "../src/Simple_Item.ts",
+    "../src/Properties.ts",
+    "../src/Hierarchical_List.ts",
+    "../src/Print_Table.ts",
+    "../src/config.ts",
+    "../prop/prop_scripts.ts",
+    "../src/main.ts"
+  ]
+}
