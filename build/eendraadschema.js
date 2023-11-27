@@ -2101,34 +2101,6 @@ var Electro_Item = /** @class */ (function (_super) {
     };
     return Electro_Item;
 }(List_Item));
-var Simple_Item = /** @class */ (function (_super) {
-    __extends(Simple_Item, _super);
-    function Simple_Item() {
-        var _this = _super.call(this) || this;
-        _this.keys.push(["name", "STRING", "no_name"]);
-        return _this;
-    }
-    Simple_Item.prototype.toHTML = function () {
-        var output = "";
-        for (var i = 0; i < this.keys.length; i++) {
-            switch (this.keys[i][1]) {
-                case "STRING": {
-                    output += this.keys[i][0] + ": ";
-                    var myId = "HL_edit_" + this.id + "_" + this.keys[i][0];
-                    output += "<input id=\"" + myId + "\" type=\"Text\" value=\"" + this.keys[i][2] + "\" onchange=HLUpdate(" + this.id + ",\"" + this.keys[i][0] + "\",\"" + myId + "\")>";
-                    break;
-                }
-            }
-        }
-        //output += " <input id=\"HL_name_"+this.id+"\" type=\"Text\" value=\""+this.name+"\" onchange=\"HLChangeName("+this.id+")\">";
-        output += " <button onclick=\"HLInsertBefore(" + this.id + ")\">InsertBefore</button>";
-        output += " <button onclick=\"HLDelete(" + this.id + ")\">Delete</button>";
-        output += " <button onclick=\"HLInsertAfter(" + this.id + ")\">Insert After</button>";
-        output += "id: " + this.id + " parent: " + this.parent;
-        return (output);
-    };
-    return Simple_Item;
-}(List_Item));
 var Properties = /** @class */ (function () {
     function Properties() {
         this.filename = "eendraadschema.eds";

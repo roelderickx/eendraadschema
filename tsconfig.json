@@ -7,7 +7,6 @@
     "src/SVGelement.ts",
     "src/List_Item.ts",
     "src/Electro_Item.ts",
-    "src/Simple_Item.ts",
     "src/Properties.ts",
     "src/Hierarchical_List.ts",
     "src/Print_Table.ts",
