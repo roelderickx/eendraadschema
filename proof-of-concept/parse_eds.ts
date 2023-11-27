@@ -92,9 +92,9 @@ class Print_Table {
 
 // Abstract base class for all items
 abstract class ElectroBaseItem {
-    private id: number;
-    protected parent: ElectroBaseItem;
-    protected children: Array<ElectroBaseItem>;
+    public id: number;
+    public parent: ElectroBaseItem;
+    public children: Array<ElectroBaseItem>;
     // item properties
     public type: string;
     public is_active: boolean;
@@ -107,7 +107,10 @@ abstract class ElectroBaseItem {
         this.parent = null;
         this.children = new Array<ElectroBaseItem>();
         
-        // item properties
+        this.initialize();
+    }
+    
+    public initialize() {
         this.type = "";
         this.is_active = true;
         this.is_collapsed = false;
@@ -117,6 +120,8 @@ abstract class ElectroBaseItem {
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
         this.is_active = json_keys['active'];
+        this.naam = json_keys['naam'];
+        this.commentaar = json_keys['commentaar'];
     }
 
     public load_eds_v2_item(json_item) {
@@ -295,6 +300,10 @@ class RootItem extends ElectroBaseItem {
     constructor() {
         // top node always has id 0
         super(0);
+    }
+    
+    public initialize() {
+        super.initialize();
 
         this.type = "root";
     }
@@ -347,10 +356,49 @@ class RootItem extends ElectroBaseItem {
 }
 
 class AansluitingItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    private aantal_polen: number; // 4
+    private zekering_type: string; // 7
+    private amperage: number; // 8
+    private kabel_type: string; // 9
+    private differentieel_waarde: number; // 11
+    private differentieel_type: string; // 17
+    private curve: string; // 18 of 17 als zekering_type == automatisch
+    private is_selectief: boolean; // 20
+    private kortsluitvermogen: number; // 22
+    private aansluiting_naam: string; // 23
+    private kabel_type_voor_teller: string; // 24
+    
+    public initialize() {
+        super.initialize();
 
         this.type = "Aansluiting";
+        this.aantal_polen = 1;
+        this.zekering_type = (this.parent && this.parent.type == "Splitsing") ? "geen" : "automatisch";
+        this.amperage = 20;
+        this.kabel_type = "XVB 3G2,5";
+        this.naam = "---";
+        this.differentieel_waarde = 300;
+        this.differentieel_type = "";
+        this.curve = "";
+        this.is_selectief = false;
+        this.kortsluitvermogen = null;
+        this.aansluiting_naam = "";
+        this.kabel_type_voor_teller = "";
+    }
+
+    public load_eds_v1_item(json_keys: Record<string, any>) {
+        super.load_eds_v1_item(json_keys);
+        this.aantal_polen = json_keys['aantal'];
+        this.zekering_type = json_keys['zekering'];
+        this.amperage = json_keys['amperage'];
+        this.kabel_type = json_keys['kabel'];
+        this.differentieel_waarde = json_keys['differentieel_waarde'];
+        this.differentieel_type = json_keys['select2'];
+        this.curve = this.zekering_type == "automatisch" ? json_keys['select2'] : json_keys['select3'];
+        this.is_selectief = json_keys['bool2'];
+        this.kortsluitvermogen = json_keys['string1'];
+        this.aansluiting_naam = json_keys['string2'];
+        this.kabel_type_voor_teller = json_keys['string3'];
     }
 
     protected get_consumers_of_children() : Array<string> {
@@ -367,14 +415,39 @@ class AansluitingItem extends ElectroBaseItem {
     
     protected properties_to_html() : string {
         var output: string = super.properties_to_html();
+        
+        output += "&nbsp;Naam: " + this.keyToHtml("string2", this.aansluiting_naam, 5) + "<br>";
+        if (this.parent.id > 0) output += "Nr: " + this.keyToHtml("naam", this.naam, 5) + ", ";
+        output += "Zekering: " + this.selectToHtml("zekering", this.zekering_type, ["automatisch", "differentieel", "differentieelautomaat", "smelt", "geen", "---", "schakelaar", "schemer"]) +
+                                   this.selectToHtml("aantal", this.aantal_polen, ["2", "3", "4"]) +
+                                   this.keyToHtml("amperage", this.amperage, 2) + "A";
+        if (this.zekering_type == "differentieel") {
+          output += ", \u0394 " + this.keyToHtml("differentieel_waarde", this.differentieel_waarde, 3) + "mA";
+          output += ", Type:" + this.selectToHtml("select2", this.differentieel_type, ["", "A", "B"]);
+          output += ", Kortsluitvermogen: " + this.keyToHtml("string1", this.kortsluitvermogen, 3) + "kA";
+          output += ", Selectief: " + this.keyToHtml("bool2", this.is_selectief);
+        } else if (this.zekering_type == "automatisch") {
+          output += ", Curve:" + this.selectToHtml("select2", this.curve, ["", "B", "C", "D"]);
+          output += ", Kortsluitvermogen: " + this.keyToHtml("string1", this.kortsluitvermogen, 3) + "kA";
+        } else if (this.zekering_type == "differentieelautomaat") {
+          output += ", \u0394 " + this.keyToHtml("differentieel_waarde", this.differentieel_waarde, 3) + "mA";
+          output += ", Curve:" + this.selectToHtml("select3", this.curve, ["", "B", "C", "D"]);
+          output += ", Type:" + this.selectToHtml("select2", this.differentieel_type, ["", "A", "B"]);
+          output += ", Kortsluitvermogen: " + this.keyToHtml("string1", this.kortsluitvermogen, 3) + "kA";
+          output += ", Selectief: " + this.keyToHtml("bool2", this.is_selectief);
+        }
+        output += ", Kabeltype na teller: " + this.keyToHtml("kabel", this.kabel_type, 10);
+        output += ", Kabeltype v&oacute;&oacute;r teller: " + this.keyToHtml("string3", this.kabel_type_voor_teller, 10);
+        output += ", Adres/tekst: " + this.keyToHtml("commentaar", this.commentaar, 10);
+        
         return output;
     }
 }
 
 
 class AansluitpuntItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Aansluitpunt";
     }
@@ -391,8 +464,8 @@ class AansluitpuntItem extends ElectroBaseItem {
 
 
 class AftakdoosItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Aftakdoos";
     }
@@ -405,8 +478,8 @@ class AftakdoosItem extends ElectroBaseItem {
 
 
 class BatterijItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Batterij";
     }
@@ -419,8 +492,8 @@ class BatterijItem extends ElectroBaseItem {
 
 
 class BelItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Bel";
     }
@@ -439,16 +512,16 @@ class BelItem extends ElectroBaseItem {
 class BoilerItem extends ElectroBaseItem {
     accumulatie: boolean;
     
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Boiler";
         this.accumulatie = false;
     }
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
-         super.load_eds_v1_item(json_keys);
-         this.accumulatie = json_keys['accumulatie'];
+        super.load_eds_v1_item(json_keys);
+        this.accumulatie = json_keys['accumulatie'];
     }
     
     protected properties_to_html() : string {
@@ -461,16 +534,16 @@ class BoilerItem extends ElectroBaseItem {
 class BordItem extends ElectroBaseItem {
     geaard: boolean;
     
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Bord";
         this.geaard = true;
     }
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
-         super.load_eds_v1_item(json_keys);
-         this.geaard = json_keys['geaard'];
+        super.load_eds_v1_item(json_keys);
+        this.geaard = json_keys['geaard'];
     }
 
     protected get_consumers_of_children() : Array<string> {
@@ -497,8 +570,8 @@ class BordItem extends ElectroBaseItem {
 
 
 class DiepvriezerItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Diepvriezer";
     }
@@ -511,8 +584,8 @@ class DiepvriezerItem extends ElectroBaseItem {
 
 
 class DomoticaItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Domotica";
     }
@@ -541,8 +614,8 @@ class DomoticaItem extends ElectroBaseItem {
 
 
 class DomoticaVerbruikerItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Domotica gestuurde verbruiker";
     }
@@ -563,8 +636,8 @@ class DomoticaVerbruikerItem extends ElectroBaseItem {
 
 
 class DroogkastItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Droogkast";
     }
@@ -577,8 +650,8 @@ class DroogkastItem extends ElectroBaseItem {
 
 
 class DrukknopItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Drukknop";
     }
@@ -591,8 +664,8 @@ class DrukknopItem extends ElectroBaseItem {
 
 
 class ElektriciteitsmeterItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Elektriciteitsmeter";
     }
@@ -605,8 +678,8 @@ class ElektriciteitsmeterItem extends ElectroBaseItem {
 
 
 class ElektrischeOvenItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Elektrische oven";
     }
@@ -619,8 +692,8 @@ class ElektrischeOvenItem extends ElectroBaseItem {
 
 
 class EVLaderItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "EV lader";
     }
@@ -628,8 +701,8 @@ class EVLaderItem extends ElectroBaseItem {
 
 
 class KetelItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Ketel";
     }
@@ -642,8 +715,8 @@ class KetelItem extends ElectroBaseItem {
 
 
 class KoelkastItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Koelkast";
     }
@@ -656,8 +729,8 @@ class KoelkastItem extends ElectroBaseItem {
 
 
 class KookfornuisItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Kookfornuis";
     }
@@ -670,30 +743,30 @@ class KookfornuisItem extends ElectroBaseItem {
 
 
 class KringItem extends ElectroBaseItem {
-    private aantal_polen: number;
-    private zekering_type: string;
-    private amperage: number;
-    private kabel_type: string;
-    private differentieel_waarde: number;
-    private kabel_aanwezig: boolean;
-    private plaatsing: string;
-    private differentieel_type: string;
-    private curve: string;
-    private in_buis: boolean;
-    private is_selectief: boolean;
-    private kortsluitvermogen: number;
+    private aantal_polen: number; // 4
+    private zekering_type: string; // 7
+    private amperage: number; // 8
+    private kabel_type: string; // 9
+    private differentieel_waarde: number; // 11
+    private kabel_aanwezig: boolean; // 12
+    private plaatsing: string; // 16
+    private differentieel_type: string; // 17
+    private curve: string; // 18 of 17 als zekering_type == automatisch
+    private in_buis: boolean; // 19
+    private is_selectief: boolean; // 20
+    private kortsluitvermogen: number; // 22
     
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Kring";
         this.aantal_polen = 1;
-        this.zekering_type = "automatisch";// TODO when parent is known: this.parent.type == "Splitsing" ? "geen" : "automatisch";
+        this.zekering_type = (this.parent && this.parent.type == "Splitsing") ? "geen" : "automatisch";
         this.amperage = 20;
         this.kabel_type = "XVB 3G2,5";
         this.naam = "---";
         this.differentieel_waarde = 300;
-        this.kabel_aanwezig = true; // TODO when parent is known: this.parent.type == "Splitsing" ? false : true;
+        this.kabel_aanwezig = (this.parent && this.parent.type == "Splitsing") ? false : true;
         this.plaatsing = "N/A";
         this.differentieel_type = "";
         this.curve = "";
@@ -703,18 +776,19 @@ class KringItem extends ElectroBaseItem {
     }
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
-         super.load_eds_v1_item(json_keys);
-         this.aantal_polen = json_keys['aantal'];
-         this.zekering_type = json_keys['zekering'];
-         this.amperage = json_keys['amperage'];
-         this.kabel_type = json_keys['kabel'];
-         this.differentieel_waarde = json_keys['differentieel_waarde'];
-         this.kabel_aanwezig = json_keys['kabel_aanwezig'];
-         this.plaatsing = json_keys['select1'];
-         this.differentieel_type = json_keys['select2'];
-         this.curve = this.zekering_type == "automatisch" ? json_keys['select2'] : json_keys['select3'];
-         this.is_selectief = json_keys['bool2'];
-         this.kortsluitvermogen = json_keys['string1'];
+        super.load_eds_v1_item(json_keys);
+        this.aantal_polen = json_keys['aantal'];
+        this.zekering_type = json_keys['zekering'];
+        this.amperage = json_keys['amperage'];
+        this.kabel_type = json_keys['kabel'];
+        this.differentieel_waarde = json_keys['differentieel_waarde'];
+        this.kabel_aanwezig = json_keys['kabel_aanwezig'];
+        this.plaatsing = json_keys['select1'];
+        this.differentieel_type = json_keys['select2'];
+        this.curve = this.zekering_type == "automatisch" ? json_keys['select2'] : json_keys['select3'];
+        this.in_buis = json_keys['bool1'];
+        this.is_selectief = json_keys['bool2'];
+        this.kortsluitvermogen = json_keys['string1'];
     }
 
     protected get_consumers_of_children() : Array<string> {
@@ -751,7 +825,6 @@ class KringItem extends ElectroBaseItem {
           output += ", Type:" + this.selectToHtml("select2", this.differentieel_type, ["", "A", "B"]);
           output += ", Kortsluitvermogen: " + this.keyToHtml("string1", this.kortsluitvermogen, 3) + "kA";
           output += ", Selectief: " + this.keyToHtml("bool2", this.is_selectief);
-        } else if (this.zekering_type == "relais") {
         }
         output += ", Kabel: " + this.keyToHtml("kabel_aanwezig", this.kabel_aanwezig);
         if (this.kabel_aanwezig) {
@@ -769,8 +842,8 @@ class KringItem extends ElectroBaseItem {
 
 
 class LeegItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Leeg";
     }
@@ -783,8 +856,8 @@ class LeegItem extends ElectroBaseItem {
 
 
 class LichtcircuitItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Lichtcircuit";
     }
@@ -801,8 +874,8 @@ class LichtcircuitItem extends ElectroBaseItem {
 
 
 class LichtpuntItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Lichtpunt";
     }
@@ -815,8 +888,8 @@ class LichtpuntItem extends ElectroBaseItem {
 
 
 class MeerdereVerbruikersItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Meerdere verbruikers";
     }
@@ -845,8 +918,8 @@ class MeerdereVerbruikersItem extends ElectroBaseItem {
 
 
 class MicrogolfovenItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Microgolfoven";
     }
@@ -859,8 +932,8 @@ class MicrogolfovenItem extends ElectroBaseItem {
 
 
 class MotorItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Motor";
     }
@@ -873,8 +946,8 @@ class MotorItem extends ElectroBaseItem {
 
 
 class OmvormerItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Omvormer";
     }
@@ -887,8 +960,8 @@ class OmvormerItem extends ElectroBaseItem {
 
 
 class OverspanningsbeveiligingItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Overspanningsbeveiliging";
     }
@@ -901,8 +974,8 @@ class OverspanningsbeveiligingItem extends ElectroBaseItem {
 
 
 class SchakelaarsItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Schakelaars";
     }
@@ -915,8 +988,8 @@ class SchakelaarsItem extends ElectroBaseItem {
 
 
 class SplitsingItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Splitsing";
     }
@@ -945,8 +1018,8 @@ class SplitsingItem extends ElectroBaseItem {
 
 
 class StoomovenItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Stoomoven";
     }
@@ -962,8 +1035,8 @@ class StopcontactItem extends ElectroBaseItem {
     geaard: boolean;
     kinderveiligheid: boolean;
     
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Stopcontact";
         this.geaard = true;
@@ -971,9 +1044,9 @@ class StopcontactItem extends ElectroBaseItem {
     }
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
-         super.load_eds_v1_item(json_keys);
-         this.geaard = json_keys['geaard'];
-         this.kinderveiligheid = json_keys['kinderveiligheid'];
+        super.load_eds_v1_item(json_keys);
+        this.geaard = json_keys['geaard'];
+        this.kinderveiligheid = json_keys['kinderveiligheid'];
     }
     
     protected properties_to_html() : string {
@@ -984,8 +1057,8 @@ class StopcontactItem extends ElectroBaseItem {
 
 
 class TransformatorItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Transformator";
     }
@@ -998,8 +1071,8 @@ class TransformatorItem extends ElectroBaseItem {
 
 
 class USBLaderItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "USB lader";
     }
@@ -1012,8 +1085,8 @@ class USBLaderItem extends ElectroBaseItem {
 
 
 class VaatwasmachineItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Vaatwasmachine";
     }
@@ -1026,8 +1099,8 @@ class VaatwasmachineItem extends ElectroBaseItem {
 
 
 class VentilatorItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Ventilator";
     }
@@ -1040,8 +1113,8 @@ class VentilatorItem extends ElectroBaseItem {
 
 
 class VerlengingItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Verlenging";
     }
@@ -1056,16 +1129,16 @@ class VerlengingItem extends ElectroBaseItem {
 class VerwarmingstoestelItem extends ElectroBaseItem {
     accumulatie: boolean;
     
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Verwarmingstoestel";
         this.accumulatie = false;
     }
 
     public load_eds_v1_item(json_keys: Record<string, any>) {
-         super.load_eds_v1_item(json_keys);
-         this.accumulatie = json_keys['accumulatie'];
+        super.load_eds_v1_item(json_keys);
+        this.accumulatie = json_keys['accumulatie'];
     }
     
     protected properties_to_html() : string {
@@ -1076,8 +1149,8 @@ class VerwarmingstoestelItem extends ElectroBaseItem {
 
 
 class VrijeTekstItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Vrije tekst";
     }
@@ -1090,8 +1163,8 @@ class VrijeTekstItem extends ElectroBaseItem {
 
 
 class WarmtepompAircoItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Warmtepomp/airco";
     }
@@ -1104,8 +1177,8 @@ class WarmtepompAircoItem extends ElectroBaseItem {
 
 
 class WasmachineItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Wasmachine";
     }
@@ -1118,8 +1191,8 @@ class WasmachineItem extends ElectroBaseItem {
 
 
 class ZeldzameSymbolenItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Zeldzame symbolen";
     }
@@ -1132,8 +1205,8 @@ class ZeldzameSymbolenItem extends ElectroBaseItem {
 
 
 class ZonnepaneelItem extends ElectroBaseItem {
-    constructor(item_id: number) {
-        super(item_id);
+    public initialize() {
+        super.initialize();
 
         this.type = "Zonnepaneel";
     }
