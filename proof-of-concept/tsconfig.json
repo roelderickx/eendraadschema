@@ -3,8 +3,10 @@
     "outFile": "parse_eds.js"
   },
   "files": [
+    "../src/general.ts",
     "../src/Properties.ts",
     "../src/Print_Table.ts",
+    "../src/SVGelement.ts",
     "items/ElectroBaseItem.ts",
     "items/RootItem.ts",
     "items/AansluitingItem.ts",

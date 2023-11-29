@@ -1,5 +1,5 @@
 declare var require: any // make tsc happy
-const pako = require('../build/pako/pako.min');
+const pako2 = require('../build/pako/pako.min');
 const fs = require('node:fs');
 
 class EendraadschemaTree {
@@ -83,9 +83,9 @@ class EendraadschemaTree {
                 }
                 try { //See if the text decoder works, if not, we will do it manually (slower)
                     let decoder = new TextDecoder("utf-8");
-                    jsontext = decoder.decode(pako.inflate(buffer));
+                    jsontext = decoder.decode(pako2.inflate(buffer));
                 } catch (error) { //Continue without the text decoder (old browsers)
-                    var inflated: Uint8Array = pako.inflate(buffer);
+                    var inflated: Uint8Array = pako2.inflate(buffer);
                     jsontext = "";
                     for (i = 0; i < inflated.length; i++) {
                         jsontext += String.fromCharCode(inflated[i])

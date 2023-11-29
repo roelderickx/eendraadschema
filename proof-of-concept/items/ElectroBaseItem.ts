@@ -202,5 +202,22 @@ abstract class ElectroBaseItem {
         
         return output;
     }
+    
+    //-- Add the addressline below --
+    // default values were starty=60, godown=15, shiftx=0, tekst=this.commentaar
+    protected svg_add_address(mySVG: SVGelement, starty: number, godown: number, shiftx: number, tekst: string) : string {
+        let returnstr:string = "";
+        if (!(/^\s*$/.test(tekst))) { //check if adres contains only white space
+          returnstr = '<text x="' + ((mySVG.xright-20)/2 + 21 + shiftx) + '" y="' + starty + '" style="text-anchor:middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-style="italic">' + htmlspecialchars(tekst) + '</text>';
+          mySVG.ydown = mySVG.ydown + godown;
+        }
+        return returnstr;
+    }
+    
+    // export the item as svg
+    public to_svg() : SVGelement {
+        let mySVG:SVGelement = new SVGelement();
+        return mySVG;
+    }
 }
 
